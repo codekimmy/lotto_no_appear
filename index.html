@@ -5,128 +5,74 @@
 <title>로또 출현번호 빈도 대시보드</title>
 <style>
   * { box-sizing: border-box; }
-  body {
-    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-    margin: 0; padding: 20px;
-    background: #f4f6fa; color: #222;
-  }
+  body { font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+    margin: 0; padding: 20px; background: #f4f6fa; color: #222; }
   h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
   .subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
-
-  .controls {
-    max-width: 1500px; margin: 0 auto 15px;
-    background: #fff; padding: 15px 20px; border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-  }
+  .controls { max-width: 1500px; margin: 0 auto 15px; background: #fff;
+    padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
   .controls label { font-weight: bold; font-size: 14px; white-space: nowrap; }
-  .controls input[type="number"] {
-    width: 90px; padding: 6px; border: 1px solid #ccc; border-radius: 5px;
-  }
-  .controls button {
-    padding: 9px 18px; background: #3498db; color: #fff;
-    border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
-    font-size: 13px;
-  }
+  .controls input[type="number"] { width: 90px; padding: 6px; border: 1px solid #ccc; border-radius: 5px; }
+  .controls button { padding: 9px 18px; background: #3498db; color: #fff; border: none;
+    border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 13px; }
   .controls button:hover { background: #2980b9; }
-  .controls button.green { background: #27ae60; }
-  .controls button.green:hover { background: #219150; }
-  .controls button.gray { background: #7f8c8d; }
-  .controls button.gray:hover { background: #6c7a7b; }
-
-  .status {
-    max-width: 1500px; margin: 0 auto 15px;
-    padding: 10px 15px; border-radius: 8px;
-    font-size: 13px;
-  }
+  .controls button.green { background: #27ae60; } .controls button.green:hover { background: #219150; }
+  .controls button.gray { background: #7f8c8d; } .controls button.gray:hover { background: #6c7a7b; }
+  .status { max-width: 1500px; margin: 0 auto 15px; padding: 10px 15px;
+    border-radius: 8px; font-size: 13px; }
   .status.info { background: #eaf4fd; color: #21618c; border-left: 4px solid #3498db; }
   .status.ok { background: #eafaf1; color: #1e8449; border-left: 4px solid #27ae60; }
   .status.err { background: #fdedec; color: #a93226; border-left: 4px solid #e74c3c; }
-
-  .legend {
-    max-width: 1500px; margin: 0 auto 15px;
-    background: #fff; padding: 12px 20px; border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex; flex-wrap: wrap; gap: 18px; align-items: center;
-    font-size: 13px;
-  }
+  .legend { max-width: 1500px; margin: 0 auto 15px; background: #fff; padding: 12px 20px;
+    border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex; flex-wrap: wrap; gap: 18px; align-items: center; font-size: 13px; }
   .legend-title { font-weight: bold; color: #2c3e50; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-swatch {
-    width: 22px; height: 22px; border-radius: 4px;
-    border: 1px solid rgba(0,0,0,0.15);
-  }
-
+  .legend-swatch { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15); }
   .scroll-wrap { max-height: 72vh; overflow: auto; max-width: 1500px; margin: 0 auto; }
-
-  table {
-    width: 100%; border-collapse: collapse; background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border-radius: 8px; overflow: hidden;
-    font-size: 13px;
-  }
+  table { width: 100%; border-collapse: collapse; background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 8px; overflow: hidden; font-size: 13px; }
   th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: center; vertical-align: top; }
-  th {
-    background: #2c3e50; color: #fff; position: sticky; top: 0;
-    font-size: 12px; z-index: 5;
-  }
+  th { background: #2c3e50; color: #fff; position: sticky; top: 0; font-size: 12px; z-index: 5; }
   tr:hover td { background: #f9fbff; }
-
-  .ball {
-    display: inline-block; width: 26px; height: 26px; line-height: 26px;
-    border-radius: 50%; color: #fff; font-weight: bold;
-    margin: 1px; font-size: 12px; text-align: center;
-  }
+  .ball { display: inline-block; width: 26px; height: 26px; line-height: 26px;
+    border-radius: 50%; color: #fff; font-weight: bold; margin: 1px; font-size: 12px; text-align: center; }
   .b1 { background:#fbc400; color:#333; } .b2 { background:#69c8f2; }
-  .b3 { background:#ff7272; } .b4 { background:#aaa; }
-  .b5 { background:#b0d840; color:#333; }
-
+  .b3 { background:#ff7272; } .b4 { background:#aaa; } .b5 { background:#b0d840; color:#333; }
   .freq-cell { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
-  .freq-ball {
-    position: relative;
-    width: 30px; height: 30px; line-height: 30px;
-    border-radius: 50%;
-    font-weight: bold; font-size: 13px; text-align: center;
-    color: #fff;
-    border: 2px solid rgba(0,0,0,0.1);
-  }
-  .freq-ball .cnt {
-    position: absolute; top: -6px; right: -6px;
-    background: #2c3e50; color: #fff;
-    border-radius: 10px; font-size: 10px; line-height: 1;
-    padding: 2px 4px; font-weight: bold; border: 1px solid #fff;
-  }
-  .f1 { background:#dbeafe; color:#1e3a8a; }
-  .f2 { background:#93c5fd; color:#0c2d6b; }
-  .f3 { background:#fbbf24; color:#5b3a00; }
-  .f4 { background:#f97316; color:#fff; }
-  .f5 { background:#dc2626; color:#fff; }
-  .f6 { background:#7f1d1d; color:#fff; }
-
-  .note {
-    max-width: 1500px; margin: 20px auto; padding: 12px;
-    background: #fffbe6; border-left: 4px solid #f1c40f;
-    font-size: 13px; color: #555; border-radius: 5px;
-  }
+  .freq-ball { position: relative; width: 30px; height: 30px; line-height: 30px; border-radius: 50%;
+    font-weight: bold; font-size: 13px; text-align: center; color: #fff; border: 2px solid rgba(0,0,0,0.1); }
+  .freq-ball .cnt { position: absolute; top: -6px; right: -6px; background: #2c3e50; color: #fff;
+    border-radius: 10px; font-size: 10px; line-height: 1; padding: 2px 4px; font-weight: bold; border: 1px solid #fff; }
+  .f1 { background:#dbeafe; color:#1e3a8a; } .f2 { background:#93c5fd; color:#0c2d6b; }
+  .f3 { background:#fbbf24; color:#5b3a00; } .f4 { background:#f97316; color:#fff; }
+  .f5 { background:#dc2626; color:#fff; } .f6 { background:#7f1d1d; color:#fff; }
+  .note { max-width: 1500px; margin: 20px auto; padding: 12px; background: #fffbe6;
+    border-left: 4px solid #f1c40f; font-size: 13px; color: #555; border-radius: 5px; }
   .draw-nums { white-space: nowrap; }
+  .progress { font-size: 12px; color: #888; margin-left: 10px; }
 </style>
 </head>
 <body>
 
 <h1>🎯 로또 출현번호 빈도 대시보드</h1>
-<div class="subtitle">직전 5~15회 실제 출현번호를 색상과 횟수로 표시 · Google Sheets 자동 연동</div>
+<div class="subtitle">직전 5~15회 실제 출현번호를 색상과 횟수로 표시 · Google Sheets 연동</div>
 
 <div class="controls">
   <label>시작 회차:</label>
   <input type="number" id="startDraw" placeholder="자동">
   <label>종료 회차:</label>
   <input type="number" id="endDraw" placeholder="자동">
-  <button onclick="runAnalysis()">분석 실행</button>
-  <button class="green" onclick="loadFromSheet()">↻ 새로고침</button>
+  <label>표시 개수:</label>
+  <input type="number" id="limitRows" value="100" min="10" max="1240">
+  <button onclick="runAnalysis()">▶ 분석 실행</button>
+  <button class="green" onclick="loadFromSheet(true)">↻ 새로고침</button>
   <button class="gray" onclick="toggleAuto()" id="autoBtn">자동 새로고침: OFF</button>
+  <span class="progress" id="progress"></span>
 </div>
 
-<div class="status info" id="status">Google Sheets에서 데이터를 불러오는 중...</div>
+<div class="status info" id="status">[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러와 분석합니다.</div>
 
 <div class="legend">
   <span class="legend-title">출현 횟수:</span>
@@ -147,67 +93,85 @@
 </div>
 
 <div class="note">
-  ※ 각 셀 = 해당 회차의 <b>직전 N회차 동안 실제로 출현한 모든 번호</b> (중복 제거, 오름차순)<br>
-  ※ 번호가 여러 번 나오면 <b>색이 진해지고</b>, 우상단 <b>배지에 출현 횟수</b> 표시<br>
-  ※ 시트를 수정하면 [↻ 새로고침] 버튼으로 최신 데이터 반영 (자동 새로고침 ON 시 5분마다)
+  ※ 페이지는 <b>[▶ 분석 실행] 버튼을 눌러야</b> 시작됩니다 (자동 실행 안 함).<br>
+  ※ 기본값은 <b>최근 100회차만</b> 표시 → 빠릅니다. “표시 개수”를 늘리면 더 많이 보입니다.<br>
+  ※ 렌더링은 <b>배치(20개씩)</b>로 처리되어 페이지가 멈추지 않습니다.<br>
+  ※ 각 셀 = 해당 회차의 직전 N회차 동안 실제로 출현한 모든 번호 (중복 제거, 오름차순).
 </div>
 
 <script>
-/* =====================================================
-   ★ 여기에 Google Sheets CSV URL을 넣어두면 자동 로드됩니다.
-   ===================================================== */
+/* ============================================================
+   ★ Google Sheets CSV URL (고정)
+   ============================================================ */
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtTpRkYQkAJVRPyEW0spfs4bJzQEAUbNjw4TFfb7kxWH8Ks2F7ctBnYC-1YeJf_uOnnmsFaxsaRifA/pub?output=csv";
-/* ===================================================== */
+
+/* CORS 우회 프록시 (file:// 등 환경 대비) */
+const PROXIES = [
+  url => url,
+  url => "https://corsproxy.io/?" + encodeURIComponent(url),
+  url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+  url => "https://thingproxy.freeboard.io/fetch/" + url
+];
+/* ============================================================ */
 
 let lottoData = [];
 let autoTimer = null;
+let isRendering = false;
 
 function setStatus(type, msg) {
   const el = document.getElementById('status');
   el.className = 'status ' + type;
   el.textContent = msg;
 }
+function setProgress(msg) {
+  document.getElementById('progress').textContent = msg || '';
+}
 
-/* ============ Google Sheets 로드 ============ */
-async function loadFromSheet() {
+async function fetchWithFallback(url) {
+  let lastErr = null;
+  for (let i = 0; i < PROXIES.length; i++) {
+    try {
+      const res = await fetch(PROXIES[i](url), { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (text.trim().startsWith('<')) throw new Error('HTML 반환');
+      if (!text.includes(',')) throw new Error('CSV 아님');
+      return text;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('모든 방법 실패');
+}
+
+async function loadFromSheet(forceReload) {
+  if (isRendering) return;
+  if (!forceReload && lottoData.length > 0) return;
+
   setStatus('info', 'Google Sheets에서 데이터를 불러오는 중...');
   try {
-    const res = await fetch(SHEET_CSV_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-
-    if (text.trim().startsWith('<')) {
-      throw new Error('CSV가 아닌 HTML이 반환되었습니다. 시트를 "웹에 게시"했는지 확인하세요.');
-    }
-
+    const text = await fetchWithFallback(SHEET_CSV_URL);
     parseCSV(text);
-    if (lottoData.length === 0) throw new Error('데이터를 파싱할 수 없습니다.');
+    if (lottoData.length === 0) throw new Error('파싱 실패');
 
     const draws = lottoData.map(d => d.draw);
     document.getElementById('startDraw').placeholder = Math.max(...draws);
     document.getElementById('endDraw').placeholder = Math.min(...draws);
-    setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${Math.min(...draws)} ~ ${Math.max(...draws)}회) · ${new Date().toLocaleTimeString()}`);
-    runAnalysis();
+    setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${Math.min(...draws)} ~ ${Math.max(...draws)}회)`);
   } catch (e) {
-    setStatus('err', '❌ 불러오기 실패: ' + e.message +
-      ' — 시트를 "파일 → 공유 → 웹에 게시"로 CSV 공개했는지 확인하세요.');
+    setStatus('err', '❌ 불러오기 실패: ' + e.message);
   }
 }
 
-/* ============ 자동 새로고침 ============ */
 function toggleAuto() {
   const btn = document.getElementById('autoBtn');
   if (autoTimer) {
-    clearInterval(autoTimer);
-    autoTimer = null;
+    clearInterval(autoTimer); autoTimer = null;
     btn.textContent = '자동 새로고침: OFF';
   } else {
-    autoTimer = setInterval(loadFromSheet, 5 * 60 * 1000); // 5분
+    autoTimer = setInterval(() => loadFromSheet(true), 5 * 60 * 1000);
     btn.textContent = '자동 새로고침: ON (5분)';
   }
 }
 
-/* ============ CSV 파싱 ============ */
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   lottoData = [];
@@ -217,41 +181,44 @@ function parseCSV(text) {
     const draw = parseInt(cols[0]);
     if (isNaN(draw)) continue;
     lottoData.push({
-      draw: draw,
-      date: cols[1],
-      nums: [cols[2], cols[3], cols[4], cols[5], cols[6], cols[7]].map(Number)
+      draw: draw, date: cols[1],
+      nums: [cols[2],cols[3],cols[4],cols[5],cols[6],cols[7]].map(Number)
     });
   }
   lottoData.sort((a, b) => a.draw - b.draw);
 }
 
-/* ============ 렌더링 ============ */
 function ballClass(n) {
-  if (n <= 10) return 'b1';
-  if (n <= 20) return 'b2';
-  if (n <= 30) return 'b3';
-  if (n <= 40) return 'b4';
-  return 'b5';
+  if (n <= 10) return 'b1'; if (n <= 20) return 'b2';
+  if (n <= 30) return 'b3'; if (n <= 40) return 'b4'; return 'b5';
 }
 function freqClass(c) {
-  if (c <= 1) return 'f1';
-  if (c === 2) return 'f2';
-  if (c === 3) return 'f3';
-  if (c === 4) return 'f4';
-  if (c === 5) return 'f5';
-  return 'f6';
+  if (c <= 1) return 'f1'; if (c === 2) return 'f2'; if (c === 3) return 'f3';
+  if (c === 4) return 'f4'; if (c === 5) return 'f5'; return 'f6';
 }
 
-function runAnalysis() {
-  if (lottoData.length === 0) { setStatus('err', '먼저 데이터를 불러오세요.'); return; }
+async function runAnalysis() {
+  if (isRendering) { setStatus('info', '이미 렌더링 중입니다...'); return; }
+  isRendering = true;
+
+  if (lottoData.length === 0) {
+    await loadFromSheet(true);
+    if (lottoData.length === 0) { isRendering = false; return; }
+  }
 
   const startEl = document.getElementById('startDraw');
   const endEl = document.getElementById('endDraw');
-  let startDraw = startEl.value ? parseInt(startEl.value) : Math.max(...lottoData.map(d => d.draw));
-  let endDraw = endEl.value ? parseInt(endEl.value) : Math.min(...lottoData.map(d => d.draw));
+  const limitEl = document.getElementById('limitRows');
 
-  const minDraw = Math.min(...lottoData.map(d => d.draw)) + 15;
-  if (endDraw < minDraw) endDraw = minDraw;
+  const maxDraw = Math.max(...lottoData.map(d => d.draw));
+  const minDrawAll = Math.min(...lottoData.map(d => d.draw));
+
+  let startDraw = startEl.value ? parseInt(startEl.value) : maxDraw;
+  let endDraw = endEl.value ? parseInt(endEl.value) : minDrawAll;
+  const limitRows = limitEl.value ? parseInt(limitEl.value) : 100;
+
+  const minAllowed = minDrawAll + 15;
+  if (endDraw < minAllowed) endDraw = minAllowed;
   if (startDraw < endDraw) [startDraw, endDraw] = [endDraw, startDraw];
 
   const ranges = [5,6,7,8,9,10,11,12,13,14,15];
@@ -264,43 +231,66 @@ function runAnalysis() {
 
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = '';
+  document.getElementById('resultTable').style.display = 'table';
 
-  const sorted = [...lottoData].sort((a, b) => b.draw - a.draw);
+  const sorted = [...lottoData].sort((a, b) => b.draw - a.draw)
+    .filter(d => d.draw <= startDraw && d.draw >= endDraw)
+    .filter(d => {
+      const idx = lottoData.findIndex(x => x.draw === d.draw);
+      return idx >= 15;
+    })
+    .slice(0, limitRows);
 
-  sorted.forEach(item => {
-    if (item.draw > startDraw || item.draw < endDraw) return;
-    const idx = lottoData.findIndex(d => d.draw === item.draw);
-    if (idx < 15) return;
+  setStatus('info', `렌더링 중... (${sorted.length}개 회차)`);
 
-    const row = document.createElement('tr');
-    let rowHTML = `<td><strong>${item.draw}</strong></td><td class="draw-nums">`;
-    item.nums.forEach(n => rowHTML += `<span class="ball ${ballClass(n)}">${n}</span>`);
-    rowHTML += '</td>';
+  const CHUNK = 20;
+  for (let i = 0; i < sorted.length; i += CHUNK) {
+    const slice = sorted.slice(i, i + CHUNK);
+    const frag = document.createDocumentFragment();
 
-    ranges.forEach(r => {
-      const prev = lottoData.slice(idx - r, idx);
-      const freq = new Map();
-      prev.forEach(p => p.nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1)));
+    slice.forEach(item => {
+      const idx = lottoData.findIndex(d => d.draw === item.draw);
+      const row = document.createElement('tr');
 
-      const nums = [...freq.keys()].sort((a, b) => a - b);
-      let cellHTML = '<div class="freq-cell">';
-      nums.forEach(n => {
-        const c = freq.get(n);
-        cellHTML += `<div class="freq-ball ${freqClass(c)}" title="${n}번: ${c}회">${n}<span class="cnt">${c}</span></div>`;
+      let rowHTML = `<td><strong>${item.draw}</strong></td><td class="draw-nums">`;
+      item.nums.forEach(n => rowHTML += `<span class="ball ${ballClass(n)}">${n}</span>`);
+      rowHTML += '</td>';
+
+      ranges.forEach(r => {
+        const prev = lottoData.slice(idx - r, idx);
+        const freq = new Map();
+        prev.forEach(p => p.nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1)));
+        const nums = [...freq.keys()].sort((a, b) => a - b);
+        let cellHTML = '<div class="freq-cell">';
+        nums.forEach(n => {
+          const c = freq.get(n);
+          cellHTML += `<div class="freq-ball ${freqClass(c)}" title="${n}번: ${c}회">${n}<span class="cnt">${c}</span></div>`;
+        });
+        cellHTML += '</div>';
+        rowHTML += `<td>${cellHTML}</td>`;
       });
-      cellHTML += '</div>';
-      rowHTML += `<td>${cellHTML}</td>`;
+
+      row.innerHTML = rowHTML;
+      frag.appendChild(row);
     });
 
-    row.innerHTML = rowHTML;
-    tbody.appendChild(row);
-  });
+    tbody.appendChild(frag);
+    setProgress(`${Math.min(i + CHUNK, sorted.length)} / ${sorted.length}`);
+    await new Promise(r => setTimeout(r, 0));
+  }
 
-  document.getElementById('resultTable').style.display = 'table';
+  setProgress('');
+  setStatus('ok', `✅ 분석 완료: ${sorted.length}개 회차 표시 (${startDraw} ~ ${endDraw} 범위, 최대 ${limitRows}개)`);
+  isRendering = false;
 }
 
-/* ============ 페이지 열면 자동 실행 ============ */
-window.addEventListener('DOMContentLoaded', loadFromSheet);
+/* ============================================================
+   페이지 열 때: UI만 표시, 아무 동작 안 함
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+  // 아무것도 실행하지 않음
+  setStatus('info', '[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러와 분석합니다.');
+});
 </script>
 </body>
 </html>
