@@ -2,115 +2,127 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>로또 출현번호 빈도 대시보드</title>
+<title>로또 출현번호 히트맵 대시보드</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
     margin: 0; padding: 20px; background: #f4f6fa; color: #222; }
   h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
   .subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
-  .controls { max-width: 1500px; margin: 0 auto 15px; background: #fff;
+
+  .controls { max-width: 1400px; margin: 0 auto 15px; background: #fff;
     padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
   .controls label { font-weight: bold; font-size: 14px; white-space: nowrap; }
-  .controls input[type="number"] { width: 90px; padding: 6px; border: 1px solid #ccc; border-radius: 5px; }
+  .controls select, .controls input[type="number"] {
+    padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px;
+  }
+  .controls select { min-width: 120px; }
   .controls button { padding: 9px 18px; background: #3498db; color: #fff; border: none;
     border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 13px; }
   .controls button:hover { background: #2980b9; }
   .controls button.green { background: #27ae60; } .controls button.green:hover { background: #219150; }
-  .controls button.gray { background: #7f8c8d; } .controls button.gray:hover { background: #6c7a7b; }
-  .status { max-width: 1500px; margin: 0 auto 15px; padding: 10px 15px;
+
+  .status { max-width: 1400px; margin: 0 auto 15px; padding: 10px 15px;
     border-radius: 8px; font-size: 13px; }
   .status.info { background: #eaf4fd; color: #21618c; border-left: 4px solid #3498db; }
   .status.ok { background: #eafaf1; color: #1e8449; border-left: 4px solid #27ae60; }
   .status.err { background: #fdedec; color: #a93226; border-left: 4px solid #e74c3c; }
-  .legend { max-width: 1500px; margin: 0 auto 15px; background: #fff; padding: 12px 20px;
+
+  .legend { max-width: 1400px; margin: 0 auto 15px; background: #fff; padding: 12px 20px;
     border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex; flex-wrap: wrap; gap: 18px; align-items: center; font-size: 13px; }
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13px; }
   .legend-title { font-weight: bold; color: #2c3e50; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
   .legend-swatch { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15); }
-  .scroll-wrap { max-height: 72vh; overflow: auto; max-width: 1500px; margin: 0 auto; }
-  table { width: 100%; border-collapse: collapse; background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 8px; overflow: hidden; font-size: 13px; }
-  th, td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: center; vertical-align: top; }
-  th { background: #2c3e50; color: #fff; position: sticky; top: 0; font-size: 12px; z-index: 5; }
-  tr:hover td { background: #f9fbff; }
-  .ball { display: inline-block; width: 26px; height: 26px; line-height: 26px;
-    border-radius: 50%; color: #fff; font-weight: bold; margin: 1px; font-size: 12px; text-align: center; }
+
+  .board { max-width: 1400px; margin: 0 auto; background: #fff;
+    border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px 20px; }
+
+  /* 상단 회차 + 당첨번호 */
+  .top-info {
+    display: flex; align-items: center; gap: 20px;
+    padding: 10px 4px 14px; border-bottom: 2px solid #eee; margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .draw-no { font-size: 20px; font-weight: bold; color: #2c3e50; }
+  .draw-no small { font-size: 13px; color: #888; font-weight: normal; margin-left: 6px; }
+  .balls { display: flex; gap: 6px; }
+  .ball { display: inline-block; width: 34px; height: 34px; line-height: 34px;
+    border-radius: 50%; color: #fff; font-weight: bold; font-size: 14px; text-align: center; }
   .b1 { background:#fbc400; color:#333; } .b2 { background:#69c8f2; }
   .b3 { background:#ff7272; } .b4 { background:#aaa; } .b5 { background:#b0d840; color:#333; }
 
-  /* 숫자만 나열, 색상으로만 빈도 구분 */
-  .freq-cell {
-    display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center;
-    line-height: 1.2;
-  }
-  .freq-num {
-    display: inline-block;
-    min-width: 22px;
-    padding: 2px 4px;
-    font-weight: bold;
-    font-size: 14px;
-    border-radius: 4px;
+  /* 히트맵 */
+  .heat-wrap { overflow-x: auto; }
+  table.heat { border-collapse: collapse; width: 100%; min-width: 900px; table-layout: fixed; }
+  table.heat th, table.heat td {
+    border: 1px solid #f0f0f0;
     text-align: center;
+    padding: 0;
+    height: 28px;
+    font-size: 12px;
   }
-  .f1 { background:#eaf2ff; color:#1e3a8a; }
-  .f2 { background:#c7ddff; color:#0c2d6b; }
-  .f3 { background:#fde68a; color:#5b3a00; }
-  .f4 { background:#fdba74; color:#7c2d12; }
-  .f5 { background:#f87171; color:#fff; }
-  .f6 { background:#b91c1c; color:#fff; }
+  table.heat th.rowhead {
+    width: 80px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
+    border-right: 2px solid #e0e0e0; font-size: 12px;
+  }
+  table.heat th.colhead {
+    background: #f7f9fc; font-weight: bold; color: #2c3e50;
+    height: 30px; font-size: 12px;
+  }
+  table.heat td.cell {
+    /* 기본: 빈칸 (채우지 않음) */
+    background: transparent;
+  }
+  /* 출현 횟수별 색상 (색상만, 숫자 없음) */
+  .c1 { background:#dbeafe; }
+  .c2 { background:#93c5fd; }
+  .c3 { background:#fbbf24; }
+  .c4 { background:#f97316; }
+  .c5 { background:#dc2626; }
+  .c6 { background:#7f1d1d; }
 
-  .note { max-width: 1500px; margin: 20px auto; padding: 12px; background: #fffbe6;
-    border-left: 4px solid #f1c40f; font-size: 13px; color: #555; border-radius: 5px; }
-  .draw-nums { white-space: nowrap; }
-  .progress { font-size: 12px; color: #888; margin-left: 10px; }
+  .note { max-width: 1400px; margin: 20px auto; padding: 12px;
+    background: #fffbe6; border-left: 4px solid #f1c40f;
+    font-size: 13px; color: #555; border-radius: 5px; }
 </style>
 </head>
 <body>
 
-<h1>🎯 로또 출현번호 빈도 대시보드</h1>
-<div class="subtitle">직전 5~15회 실제 출현번호를 숫자와 색상으로 표시 · Google Sheets 연동</div>
+<h1>🎯 로또 출현번호 히트맵</h1>
+<div class="subtitle">선택 회차의 직전 5~15회 × 1~45번 출현 빈도 (색상만 표시)</div>
 
 <div class="controls">
-  <label>시작 회차:</label>
-  <input type="number" id="startDraw" placeholder="자동">
-  <label>종료 회차:</label>
-  <input type="number" id="endDraw" placeholder="자동">
-  <label>표시 개수:</label>
-  <input type="number" id="limitRows" value="100" min="10" max="1240">
+  <label>회차 선택:</label>
+  <select id="drawSelect"><option>-- 먼저 데이터 로드 --</option></select>
   <button onclick="runAnalysis()">▶ 분석 실행</button>
   <button class="green" onclick="loadFromSheet(true)">↻ 새로고침</button>
-  <button class="gray" onclick="toggleAuto()" id="autoBtn">자동 새로고침: OFF</button>
-  <span class="progress" id="progress"></span>
 </div>
 
-<div class="status info" id="status">[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러와 분석합니다.</div>
+<div class="status info" id="status">[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러옵니다.</div>
 
 <div class="legend">
   <span class="legend-title">출현 횟수:</span>
-  <span class="legend-item"><span class="legend-swatch f1"></span>1회</span>
-  <span class="legend-item"><span class="legend-swatch f2"></span>2회</span>
-  <span class="legend-item"><span class="legend-swatch f3"></span>3회</span>
-  <span class="legend-item"><span class="legend-swatch f4"></span>4회</span>
-  <span class="legend-item"><span class="legend-swatch f5"></span>5회</span>
-  <span class="legend-item"><span class="legend-swatch f6"></span>6회+</span>
-  <span style="color:#888;">(숫자 배경색 = 출현 횟수)</span>
+  <span class="legend-item"><span class="legend-swatch c1"></span>1회</span>
+  <span class="legend-item"><span class="legend-swatch c2"></span>2회</span>
+  <span class="legend-item"><span class="legend-swatch c3"></span>3회</span>
+  <span class="legend-item"><span class="legend-swatch c4"></span>4회</span>
+  <span class="legend-item"><span class="legend-swatch c5"></span>5회</span>
+  <span class="legend-item"><span class="legend-swatch c6"></span>6회+</span>
+  <span style="color:#888;">· 출현 없음 = 빈칸</span>
 </div>
 
-<div class="scroll-wrap">
-  <table id="resultTable" style="display:none;">
-    <thead id="tableHead"></thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+<div class="board" id="board" style="display:none;">
+  <div class="top-info" id="topInfo"></div>
+  <div class="heat-wrap" id="heatWrap"></div>
 </div>
 
 <div class="note">
   ※ 페이지는 <b>[▶ 분석 실행] 버튼을 눌러야</b> 시작됩니다 (자동 실행 안 함).<br>
-  ※ 기본값은 <b>최근 100회차만</b> 표시 → 빠릅니다. “표시 개수”를 늘리면 더 많이 보입니다.<br>
-  ※ 각 셀 = 해당 회차의 직전 N회차 동안 실제로 출현한 모든 번호 (중복 제거, 오름차순).<br>
-  ※ 숫자 배경색이 진할수록 많이 출현한 번호입니다.
+  ※ 상단 드롭다운에서 회차를 바꾸면 즉시 히트맵이 갱신됩니다.<br>
+  ※ 각 행 = 직전 N회 범위, 각 열 = 1~45번. 셀 색 = 해당 범위에서 그 번호의 출현 횟수.<br>
+  ※ <b>출현하지 않은 번호는 빈칸</b>입니다.
 </div>
 
 <script>
@@ -119,7 +131,6 @@
    ============================================================ */
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtTpRkYQkAJVRPyEW0spfs4bJzQEAUbNjw4TFfb7kxWH8Ks2F7ctBnYC-1YeJf_uOnnmsFaxsaRifA/pub?output=csv";
 
-/* CORS 우회 프록시 (환경 대비) */
 const PROXIES = [
   url => url,
   url => "https://corsproxy.io/?" + encodeURIComponent(url),
@@ -129,16 +140,12 @@ const PROXIES = [
 /* ============================================================ */
 
 let lottoData = [];
-let autoTimer = null;
-let isRendering = false;
+let loaded = false;
 
 function setStatus(type, msg) {
   const el = document.getElementById('status');
   el.className = 'status ' + type;
   el.textContent = msg;
-}
-function setProgress(msg) {
-  document.getElementById('progress').textContent = msg || '';
 }
 
 async function fetchWithFallback(url) {
@@ -157,32 +164,38 @@ async function fetchWithFallback(url) {
 }
 
 async function loadFromSheet(forceReload) {
-  if (isRendering) return;
-  if (!forceReload && lottoData.length > 0) return;
-
+  if (!forceReload && loaded) return true;
   setStatus('info', 'Google Sheets에서 데이터를 불러오는 중...');
   try {
     const text = await fetchWithFallback(SHEET_CSV_URL);
     parseCSV(text);
     if (lottoData.length === 0) throw new Error('파싱 실패');
+    loaded = true;
 
-    const draws = lottoData.map(d => d.draw);
-    document.getElementById('startDraw').placeholder = Math.max(...draws);
-    document.getElementById('endDraw').placeholder = Math.min(...draws);
-    setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${Math.min(...draws)} ~ ${Math.max(...draws)}회)`);
+    // 드롭다운 채우기 (최신 → 과거, 최소 15회 이전 데이터가 있는 회차만)
+    const sel = document.getElementById('drawSelect');
+    sel.innerHTML = '';
+    const sorted = [...lottoData].sort((a, b) => b.draw - a.draw);
+    sorted.forEach(d => {
+      const idx = lottoData.findIndex(x => x.draw === d.draw);
+      if (idx < 15) return;
+      const opt = document.createElement('option');
+      opt.value = d.draw;
+      opt.textContent = d.draw + '회';
+      sel.appendChild(opt);
+    });
+
+    // 선택 이벤트 (한 번만)
+    if (!sel.dataset.bound) {
+      sel.addEventListener('change', renderHeatmap);
+      sel.dataset.bound = '1';
+    }
+
+    setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${Math.min(...lottoData.map(d=>d.draw))} ~ ${Math.max(...lottoData.map(d=>d.draw))}회)`);
+    return true;
   } catch (e) {
     setStatus('err', '❌ 불러오기 실패: ' + e.message);
-  }
-}
-
-function toggleAuto() {
-  const btn = document.getElementById('autoBtn');
-  if (autoTimer) {
-    clearInterval(autoTimer); autoTimer = null;
-    btn.textContent = '자동 새로고침: OFF';
-  } else {
-    autoTimer = setInterval(() => loadFromSheet(true), 5 * 60 * 1000);
-    btn.textContent = '자동 새로고침: ON (5분)';
+    return false;
   }
 }
 
@@ -207,99 +220,74 @@ function ballClass(n) {
   if (n <= 30) return 'b3'; if (n <= 40) return 'b4'; return 'b5';
 }
 function freqClass(c) {
-  if (c <= 1) return 'f1'; if (c === 2) return 'f2'; if (c === 3) return 'f3';
-  if (c === 4) return 'f4'; if (c === 5) return 'f5'; return 'f6';
+  if (c <= 0) return '';   // 빈칸
+  if (c === 1) return 'c1';
+  if (c === 2) return 'c2';
+  if (c === 3) return 'c3';
+  if (c === 4) return 'c4';
+  if (c === 5) return 'c5';
+  return 'c6';
 }
 
 async function runAnalysis() {
-  if (isRendering) { setStatus('info', '이미 렌더링 중입니다...'); return; }
-  isRendering = true;
-
-  if (lottoData.length === 0) {
-    await loadFromSheet(true);
-    if (lottoData.length === 0) { isRendering = false; return; }
+  if (!loaded) {
+    const ok = await loadFromSheet(true);
+    if (!ok) return;
   }
+  renderHeatmap();
+}
 
-  const startEl = document.getElementById('startDraw');
-  const endEl = document.getElementById('endDraw');
-  const limitEl = document.getElementById('limitRows');
+function renderHeatmap() {
+  const sel = document.getElementById('drawSelect');
+  if (!sel.value || isNaN(parseInt(sel.value))) return;
+  const targetDraw = parseInt(sel.value);
+  const idx = lottoData.findIndex(d => d.draw === targetDraw);
+  if (idx < 15) return;
 
-  const maxDraw = Math.max(...lottoData.map(d => d.draw));
-  const minDrawAll = Math.min(...lottoData.map(d => d.draw));
+  const item = lottoData[idx];
 
-  let startDraw = startEl.value ? parseInt(startEl.value) : maxDraw;
-  let endDraw = endEl.value ? parseInt(endEl.value) : minDrawAll;
-  const limitRows = limitEl.value ? parseInt(limitEl.value) : 100;
+  // 상단 [회차 / 당첨번호]
+  const topInfo = document.getElementById('topInfo');
+  let topHTML = `<div class="draw-no">${item.draw}회<small>${item.date}</small></div>`;
+  topHTML += '<div class="balls">';
+  item.nums.forEach(n => topHTML += `<span class="ball ${ballClass(n)}">${n}</span>`);
+  topHTML += '</div>';
+  topInfo.innerHTML = topHTML;
 
-  const minAllowed = minDrawAll + 15;
-  if (endDraw < minAllowed) endDraw = minAllowed;
-  if (startDraw < endDraw) [startDraw, endDraw] = [endDraw, startDraw];
-
+  // 히트맵 테이블
   const ranges = [5,6,7,8,9,10,11,12,13,14,15];
+  const nums = Array.from({length: 45}, (_, i) => i + 1);
 
-  const thead = document.getElementById('tableHead');
-  let headHTML = '<tr><th>회차</th><th>당첨번호</th>';
-  ranges.forEach(r => headHTML += `<th>직전 ${r}회</th>`);
-  headHTML += '</tr>';
-  thead.innerHTML = headHTML;
+  let html = '<table class="heat">';
 
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '';
-  document.getElementById('resultTable').style.display = 'table';
+  // 헤더행: 1~45
+  html += '<thead><tr><th class="rowhead">범위</th>';
+  nums.forEach(n => html += `<th class="colhead">${n}</th>`);
+  html += '</tr></thead><tbody>';
 
-  const sorted = [...lottoData].sort((a, b) => b.draw - a.draw)
-    .filter(d => d.draw <= startDraw && d.draw >= endDraw)
-    .filter(d => {
-      const idx = lottoData.findIndex(x => x.draw === d.draw);
-      return idx >= 15;
-    })
-    .slice(0, limitRows);
+  // 각 범위별 행
+  ranges.forEach(r => {
+    const prev = lottoData.slice(idx - r, idx);
+    const freq = new Map();
+    prev.forEach(p => p.nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1)));
 
-  setStatus('info', `렌더링 중... (${sorted.length}개 회차)`);
-
-  const CHUNK = 20;
-  for (let i = 0; i < sorted.length; i += CHUNK) {
-    const slice = sorted.slice(i, i + CHUNK);
-    const frag = document.createDocumentFragment();
-
-    slice.forEach(item => {
-      const idx = lottoData.findIndex(d => d.draw === item.draw);
-      const row = document.createElement('tr');
-
-      let rowHTML = `<td><strong>${item.draw}</strong></td><td class="draw-nums">`;
-      item.nums.forEach(n => rowHTML += `<span class="ball ${ballClass(n)}">${n}</span>`);
-      rowHTML += '</td>';
-
-      ranges.forEach(r => {
-        const prev = lottoData.slice(idx - r, idx);
-        const freq = new Map();
-        prev.forEach(p => p.nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1)));
-        const nums = [...freq.keys()].sort((a, b) => a - b);
-        let cellHTML = '<div class="freq-cell">';
-        nums.forEach(n => {
-          const c = freq.get(n);
-          cellHTML += `<span class="freq-num ${freqClass(c)}" title="${n}번: ${c}회">${n}</span>`;
-        });
-        cellHTML += '</div>';
-        rowHTML += `<td>${cellHTML}</td>`;
-      });
-
-      row.innerHTML = rowHTML;
-      frag.appendChild(row);
+    html += `<tr><th class="rowhead">직전 ${r}회</th>`;
+    nums.forEach(n => {
+      const c = freq.get(n) || 0;
+      const cls = freqClass(c);
+      html += `<td class="cell ${cls}" title="${n}번 · ${r}회 범위 · ${c}회 출현"></td>`;
     });
+    html += '</tr>';
+  });
 
-    tbody.appendChild(frag);
-    setProgress(`${Math.min(i + CHUNK, sorted.length)} / ${sorted.length}`);
-    await new Promise(r => setTimeout(r, 0));
-  }
+  html += '</tbody></table>';
 
-  setProgress('');
-  setStatus('ok', `✅ 분석 완료: ${sorted.length}개 회차 표시 (${startDraw} ~ ${endDraw} 범위, 최대 ${limitRows}개)`);
-  isRendering = false;
+  document.getElementById('heatWrap').innerHTML = html;
+  document.getElementById('board').style.display = 'block';
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  setStatus('info', '[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러와 분석합니다.');
+  setStatus('info', '[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러옵니다.');
 });
 </script>
 </body>
