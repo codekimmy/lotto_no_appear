@@ -12,16 +12,18 @@
 
   .controls { max-width: 1400px; margin: 0 auto 15px; background: #fff;
     padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .controls label { font-weight: bold; font-size: 14px; white-space: nowrap; }
-  .controls select, .controls input[type="number"] {
-    padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px;
+  .controls input[type="number"] {
+    width: 90px; padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px;
   }
-  .controls select { min-width: 120px; }
-  .controls button { padding: 9px 18px; background: #3498db; color: #fff; border: none;
+  .controls select { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px;
+    font-size: 13px; min-width: 110px; }
+  .controls button { padding: 9px 16px; background: #3498db; color: #fff; border: none;
     border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 13px; }
   .controls button:hover { background: #2980b9; }
   .controls button.green { background: #27ae60; } .controls button.green:hover { background: #219150; }
+  .controls button.gray { background: #7f8c8d; } .controls button.gray:hover { background: #6c7a7b; }
 
   .status { max-width: 1400px; margin: 0 auto 15px; padding: 10px 15px;
     border-radius: 8px; font-size: 13px; }
@@ -39,12 +41,9 @@
   .board { max-width: 1400px; margin: 0 auto; background: #fff;
     border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px 20px; }
 
-  /* 상단 회차 + 당첨번호 */
-  .top-info {
-    display: flex; align-items: center; gap: 20px;
+  .top-info { display: flex; align-items: center; gap: 20px;
     padding: 10px 4px 14px; border-bottom: 2px solid #eee; margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
+    flex-wrap: wrap; }
   .draw-no { font-size: 20px; font-weight: bold; color: #2c3e50; }
   .draw-no small { font-size: 13px; color: #888; font-weight: normal; margin-left: 6px; }
   .balls { display: flex; gap: 6px; }
@@ -53,35 +52,21 @@
   .b1 { background:#fbc400; color:#333; } .b2 { background:#69c8f2; }
   .b3 { background:#ff7272; } .b4 { background:#aaa; } .b5 { background:#b0d840; color:#333; }
 
-  /* 히트맵 */
   .heat-wrap { overflow-x: auto; }
   table.heat { border-collapse: collapse; width: 100%; min-width: 900px; table-layout: fixed; }
   table.heat th, table.heat td {
-    border: 1px solid #f0f0f0;
-    text-align: center;
-    padding: 0;
-    height: 28px;
-    font-size: 12px;
-  }
+    border: 1px solid #f0f0f0; text-align: center; padding: 0;
+    height: 28px; font-size: 12px; }
   table.heat th.rowhead {
     width: 80px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
-    border-right: 2px solid #e0e0e0; font-size: 12px;
-  }
+    border-right: 2px solid #e0e0e0; font-size: 12px; }
   table.heat th.colhead {
-    background: #f7f9fc; font-weight: bold; color: #2c3e50;
-    height: 30px; font-size: 12px;
-  }
-  table.heat td.cell {
-    /* 기본: 빈칸 (채우지 않음) */
-    background: transparent;
-  }
-  /* 출현 횟수별 색상 (색상만, 숫자 없음) */
-  .c1 { background:#dbeafe; }
-  .c2 { background:#93c5fd; }
-  .c3 { background:#fbbf24; }
-  .c4 { background:#f97316; }
-  .c5 { background:#dc2626; }
-  .c6 { background:#7f1d1d; }
+    background: #f7f9fc; font-weight: bold; color: #2c3e50; height: 30px; font-size: 12px; }
+  table.heat td.cell { background: transparent; }
+
+  .c1 { background:#dbeafe; } .c2 { background:#93c5fd; }
+  .c3 { background:#fbbf24; } .c4 { background:#f97316; }
+  .c5 { background:#dc2626; } .c6 { background:#7f1d1d; }
 
   .note { max-width: 1400px; margin: 20px auto; padding: 12px;
     background: #fffbe6; border-left: 4px solid #f1c40f;
@@ -94,8 +79,15 @@
 <div class="subtitle">선택 회차의 직전 5~15회 × 1~45번 출현 빈도 (색상만 표시)</div>
 
 <div class="controls">
+  <label>시작 회차:</label>
+  <input type="number" id="startDraw" placeholder="예: 1141">
+  <label>종료 회차:</label>
+  <input type="number" id="endDraw" placeholder="예: 1240">
+  <button class="gray" onclick="applyRange()">범위 조회</button>
+
   <label>회차 선택:</label>
   <select id="drawSelect"><option>-- 먼저 데이터 로드 --</option></select>
+
   <button onclick="runAnalysis()">▶ 분석 실행</button>
   <button class="green" onclick="loadFromSheet(true)">↻ 새로고침</button>
 </div>
@@ -120,9 +112,9 @@
 
 <div class="note">
   ※ 페이지는 <b>[▶ 분석 실행] 버튼을 눌러야</b> 시작됩니다 (자동 실행 안 함).<br>
-  ※ 상단 드롭다운에서 회차를 바꾸면 즉시 히트맵이 갱신됩니다.<br>
-  ※ 각 행 = 직전 N회 범위, 각 열 = 1~45번. 셀 색 = 해당 범위에서 그 번호의 출현 횟수.<br>
-  ※ <b>출현하지 않은 번호는 빈칸</b>입니다.
+  ※ <b>시작/종료 회차</b>를 입력하고 [범위 조회] → 그 범위의 회차만 드롭다운에 표시.<br>
+  ※ 드롭다운에서 회차를 바꾸면 즉시 히트맵 갱신.<br>
+  ※ 각 행 = 직전 N회 범위, 각 열 = 1~45번. 셀 색 = 출현 횟수. <b>0회는 빈칸</b>.
 </div>
 
 <script>
@@ -172,26 +164,22 @@ async function loadFromSheet(forceReload) {
     if (lottoData.length === 0) throw new Error('파싱 실패');
     loaded = true;
 
-    // 드롭다운 채우기 (최신 → 과거, 최소 15회 이전 데이터가 있는 회차만)
-    const sel = document.getElementById('drawSelect');
-    sel.innerHTML = '';
-    const sorted = [...lottoData].sort((a, b) => b.draw - a.draw);
-    sorted.forEach(d => {
-      const idx = lottoData.findIndex(x => x.draw === d.draw);
-      if (idx < 15) return;
-      const opt = document.createElement('option');
-      opt.value = d.draw;
-      opt.textContent = d.draw + '회';
-      sel.appendChild(opt);
-    });
+    const draws = lottoData.map(d => d.draw);
+    const minD = Math.min(...draws);
+    const maxD = Math.max(...draws);
 
-    // 선택 이벤트 (한 번만)
-    if (!sel.dataset.bound) {
-      sel.addEventListener('change', renderHeatmap);
-      sel.dataset.bound = '1';
-    }
+    // 기본 범위 자동 세팅 (최근 100회차)
+    const startEl = document.getElementById('startDraw');
+    const endEl = document.getElementById('endDraw');
+    if (!startEl.value) startEl.value = Math.max(minD + 15, maxD - 99);
+    if (!endEl.value) endEl.value = maxD;
+    startEl.placeholder = `예: ${minD + 15}`;
+    endEl.placeholder = `예: ${maxD}`;
 
-    setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${Math.min(...lottoData.map(d=>d.draw))} ~ ${Math.max(...lottoData.map(d=>d.draw))}회)`);
+    setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${minD} ~ ${maxD}회)`);
+
+    // 범위 적용 (드롭다운 채우기 + 첫 회차 렌더)
+    applyRange();
     return true;
   } catch (e) {
     setStatus('err', '❌ 불러오기 실패: ' + e.message);
@@ -220,7 +208,7 @@ function ballClass(n) {
   if (n <= 30) return 'b3'; if (n <= 40) return 'b4'; return 'b5';
 }
 function freqClass(c) {
-  if (c <= 0) return '';   // 빈칸
+  if (c <= 0) return '';
   if (c === 1) return 'c1';
   if (c === 2) return 'c2';
   if (c === 3) return 'c3';
@@ -229,24 +217,92 @@ function freqClass(c) {
   return 'c6';
 }
 
+/* ============================================================
+   범위 조회: 시작/종료 회차 안의 회차들만 드롭다운에 채움
+   ============================================================ */
+function applyRange() {
+  if (lottoData.length === 0) { setStatus('err', '먼저 [▶ 분석 실행]으로 데이터를 불러오세요.'); return; }
+
+  const startVal = parseInt(document.getElementById('startDraw').value);
+  const endVal = parseInt(document.getElementById('endDraw').value);
+
+  const draws = lottoData.map(d => d.draw);
+  const minD = Math.min(...draws);
+  const maxD = Math.max(...draws);
+
+  let startDraw = isNaN(startVal) ? minD + 15 : startVal;
+  let endDraw = isNaN(endVal) ? maxD : endVal;
+
+  // 범위 보정
+  const minAllowed = minD + 15;
+  if (startDraw < minAllowed) startDraw = minAllowed;
+  if (endDraw > maxD) endDraw = maxD;
+  if (startDraw > endDraw) [startDraw, endDraw] = [endDraw, startDraw];
+
+  document.getElementById('startDraw').value = startDraw;
+  document.getElementById('endDraw').value = endDraw;
+
+  // 드롭다운 채우기 (범위 안 회차, 최신 → 과거)
+  const sel = document.getElementById('drawSelect');
+  const prevValue = sel.value;
+  sel.innerHTML = '';
+
+  const sorted = [...lottoData].sort((a, b) => b.draw - a.draw);
+  let count = 0;
+  sorted.forEach(d => {
+    if (d.draw < startDraw || d.draw > endDraw) return;
+    const idx = lottoData.findIndex(x => x.draw === d.draw);
+    if (idx < 15) return;
+    const opt = document.createElement('option');
+    opt.value = d.draw;
+    opt.textContent = d.draw + '회';
+    sel.appendChild(opt);
+    count++;
+  });
+
+  if (count === 0) {
+    sel.innerHTML = '<option>-- 해당 범위 없음 --</option>';
+    document.getElementById('board').style.display = 'none';
+    setStatus('err', `범위(${startDraw}~${endDraw})에 분석 가능한 회차가 없습니다. (최소 ${minAllowed}회 이상 필요)`);
+    return;
+  }
+
+  // 이전 선택값이 범위 안에 있으면 유지, 아니면 첫 항목
+  if (prevValue && [...sel.options].some(o => o.value === prevValue)) {
+    sel.value = prevValue;
+  }
+
+  // change 이벤트 한 번만 바인딩
+  if (!sel.dataset.bound) {
+    sel.addEventListener('change', renderHeatmap);
+    sel.dataset.bound = '1';
+  }
+
+  setStatus('ok', `범위 적용: ${startDraw} ~ ${endDraw}회 (${count}개 회차)`);
+
+  // 첫 회차 렌더
+  renderHeatmap();
+}
+
 async function runAnalysis() {
   if (!loaded) {
     const ok = await loadFromSheet(true);
     if (!ok) return;
+  } else {
+    applyRange();
   }
-  renderHeatmap();
 }
 
 function renderHeatmap() {
   const sel = document.getElementById('drawSelect');
-  if (!sel.value || isNaN(parseInt(sel.value))) return;
-  const targetDraw = parseInt(sel.value);
-  const idx = lottoData.findIndex(d => d.draw === targetDraw);
+  const v = parseInt(sel.value);
+  if (isNaN(v)) return;
+  const idx = lottoData.findIndex(d => d.draw === v);
   if (idx < 15) return;
 
   const item = lottoData[idx];
 
-  // 상단 [회차 / 당첨번호]
+  // 상단 회차 + 당첨번호
   const topInfo = document.getElementById('topInfo');
   let topHTML = `<div class="draw-no">${item.draw}회<small>${item.date}</small></div>`;
   topHTML += '<div class="balls">';
@@ -254,18 +310,15 @@ function renderHeatmap() {
   topHTML += '</div>';
   topInfo.innerHTML = topHTML;
 
-  // 히트맵 테이블
+  // 히트맵
   const ranges = [5,6,7,8,9,10,11,12,13,14,15];
   const nums = Array.from({length: 45}, (_, i) => i + 1);
 
   let html = '<table class="heat">';
-
-  // 헤더행: 1~45
   html += '<thead><tr><th class="rowhead">범위</th>';
   nums.forEach(n => html += `<th class="colhead">${n}</th>`);
   html += '</tr></thead><tbody>';
 
-  // 각 범위별 행
   ranges.forEach(r => {
     const prev = lottoData.slice(idx - r, idx);
     const freq = new Map();
@@ -275,13 +328,12 @@ function renderHeatmap() {
     nums.forEach(n => {
       const c = freq.get(n) || 0;
       const cls = freqClass(c);
-      html += `<td class="cell ${cls}" title="${n}번 · ${r}회 범위 · ${c}회 출현"></td>`;
+      html += `<td class="cell ${cls}" title="${n}번 · 직전 ${r}회 · ${c}회 출현"></td>`;
     });
     html += '</tr>';
   });
 
   html += '</tbody></table>';
-
   document.getElementById('heatWrap').innerHTML = html;
   document.getElementById('board').style.display = 'block';
 }
