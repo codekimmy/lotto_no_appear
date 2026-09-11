@@ -36,7 +36,9 @@
     display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13px; }
   .legend-title { font-weight: bold; color: #2c3e50; }
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-swatch { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15); }
+  .legend-swatch { width: 22px; height: 22px; border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.15); text-align: center; line-height: 22px;
+    font-size: 11px; font-weight: bold; color: #333; }
 
   .board { max-width: 1400px; margin: 0 auto; background: #fff;
     border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px 20px; }
@@ -52,16 +54,33 @@
   .b1 { background:#fbc400; color:#333; } .b2 { background:#69c8f2; }
   .b3 { background:#ff7272; } .b4 { background:#aaa; } .b5 { background:#b0d840; color:#333; }
 
-  .heat-wrap { overflow-x: auto; }
-  table.heat { border-collapse: collapse; width: 100%; min-width: 900px; table-layout: fixed; }
+  /* 히트맵 세로 스크롤 + 헤더 고정 */
+  .heat-wrap { max-height: 70vh; overflow: auto; border: 1px solid #eee; border-radius: 6px; }
+  table.heat { border-collapse: separate; border-spacing: 0; width: 100%;
+    min-width: 1000px; table-layout: fixed; }
   table.heat th, table.heat td {
-    border: 1px solid #f0f0f0; text-align: center; padding: 0;
-    height: 28px; font-size: 12px; background-clip: padding-box; }
+    border-right: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0;
+    text-align: center; padding: 0; height: 30px; font-size: 12px; }
+
+  /* 헤더 고정 */
+  table.heat thead th { position: sticky; top: 0; z-index: 3;
+    background: #f7f9fc; color: #2c3e50; font-weight: bold;
+    border-bottom: 2px solid #e0e0e0; }
   table.heat th.rowhead {
-    width: 80px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
-    border-right: 2px solid #e0e0e0; font-size: 12px; }
-  table.heat th.colhead {
-    background: #f7f9fc; font-weight: bold; color: #2c3e50; height: 30px; font-size: 12px; }
+    width: 90px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
+    position: sticky; left: 0; z-index: 2;
+    border-right: 2px solid #e0e0e0; }
+  table.heat thead th.rowhead { z-index: 4; }
+
+  /* 셀 = 색상 + 숫자 */
+  table.heat td.cell {
+    font-weight: bold;
+    color: #333;
+    font-size: 12px;
+    line-height: 30px;
+  }
+  /* 색이 진한 셀은 글자 흰색 */
+  table.heat td.cell.dark { color: #fff; }
 
   .note { max-width: 1400px; margin: 20px auto; padding: 12px;
     background: #fffbe6; border-left: 4px solid #f1c40f;
@@ -71,11 +90,11 @@
 <body>
 
 <h1>🎯 로또 출현번호 히트맵</h1>
-<div class="subtitle">선택 회차의 직전 5~15회 × 1~45번 출현 빈도 (색상만 표시)</div>
+<div class="subtitle">선택 범위만큼 “직전 1회 ~ 직전 N회” × 1~45번 출현 빈도 (색상 + 숫자)</div>
 
 <div class="controls">
   <label>시작 회차:</label>
-  <input type="number" id="startDraw" placeholder="예: 1141">
+  <input type="number" id="startDraw" placeholder="예: 1236">
   <label>종료 회차:</label>
   <input type="number" id="endDraw" placeholder="예: 1240">
   <button class="gray" onclick="applyRange()">범위 조회</button>
@@ -91,13 +110,13 @@
 
 <div class="legend">
   <span class="legend-title">출현 횟수:</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#dbeafe"></span>1회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#93c5fd"></span>2회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#fbbf24"></span>3회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#f97316"></span>4회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#dc2626"></span>5회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#7f1d1d"></span>6회+</span>
-  <span style="color:#888;">· 출현 없음 = 빈칸</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#dbeafe">1</span>1회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#93c5fd">2</span>2회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#fbbf24">3</span>3회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#f97316;color:#fff">4</span>4회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#dc2626;color:#fff">5</span>5회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#7f1d1d;color:#fff">6+</span>6회+</span>
+  <span style="color:#888;">· 0회 = 빈칸</span>
 </div>
 
 <div class="board" id="board" style="display:none;">
@@ -107,9 +126,9 @@
 
 <div class="note">
   ※ 페이지는 <b>[▶ 분석 실행] 버튼을 눌러야</b> 시작됩니다 (자동 실행 안 함).<br>
-  ※ <b>시작/종료 회차</b>를 입력하고 [범위 조회] → 그 범위의 회차만 드롭다운에 표시.<br>
-  ※ 드롭다운에서 회차를 바꾸면 즉시 히트맵 갱신.<br>
-  ※ 각 행 = 직전 N회 범위, 각 열 = 1~45번. 셀 색 = 출현 횟수. <b>0회는 빈칸</b>.
+  ※ <b>시작/종료 회차</b>를 입력하고 [범위 조회] → 그 범위의 회차 개수만큼 “직전 1회 ~ 직전 N회” 행이 생성됩니다.<br>
+  ※ 예: 1236~1240 (5개) → 행 = 직전 1회, 2회, 3회, 4회, 5회 (각각 1240, 1239, …, 1236 기준 직전 N회)<br>
+  ※ 셀 = 출현 횟수 숫자 + 색상. 0회는 빈칸.
 </div>
 
 <script>
@@ -125,14 +144,14 @@ const PROXIES = [
   url => "https://thingproxy.freeboard.io/fetch/" + url
 ];
 
-/* 출현 횟수 → 배경색 매핑 (인라인 스타일용) */
+/* 출현 횟수 → 배경색 + 글자색 */
 const COLOR_MAP = {
-  1: '#dbeafe',
-  2: '#93c5fd',
-  3: '#fbbf24',
-  4: '#f97316',
-  5: '#dc2626',
-  6: '#7f1d1d'
+  1: { bg: '#dbeafe', fg: '#1e3a8a' },
+  2: { bg: '#93c5fd', fg: '#0c2d6b' },
+  3: { bg: '#fbbf24', fg: '#5b3a00' },
+  4: { bg: '#f97316', fg: '#ffffff' },
+  5: { bg: '#dc2626', fg: '#ffffff' },
+  6: { bg: '#7f1d1d', fg: '#ffffff' }
 };
 /* ============================================================ */
 
@@ -173,10 +192,9 @@ async function loadFromSheet(forceReload) {
     const minD = Math.min(...draws);
     const maxD = Math.max(...draws);
 
-    // 기본 범위 자동 세팅 (최근 100회차)
     const startEl = document.getElementById('startDraw');
     const endEl = document.getElementById('endDraw');
-    if (!startEl.value) startEl.value = Math.max(minD + 15, maxD - 99);
+    if (!startEl.value) startEl.value = Math.max(minD + 15, maxD - 4);
     if (!endEl.value) endEl.value = maxD;
     startEl.placeholder = `예: ${minD + 15}`;
     endEl.placeholder = `예: ${maxD}`;
@@ -213,6 +231,9 @@ function ballClass(n) {
   if (n <= 30) return 'b3'; if (n <= 40) return 'b4'; return 'b5';
 }
 
+/* ============================================================
+   범위 조회: 시작/종료 회차 → 드롭다운 채우기
+   ============================================================ */
 function applyRange() {
   if (lottoData.length === 0) {
     setStatus('err', '먼저 [▶ 분석 실행]으로 데이터를 불러오세요.');
@@ -283,6 +304,12 @@ async function runAnalysis() {
   }
 }
 
+/* ============================================================
+   히트맵 렌더링
+   - 행: 직전 1회 ~ 직전 N회 (N = 선택 범위 회차 개수)
+   - 열: 1~45
+   - 셀: 색상 + 출현 횟수 숫자
+   ============================================================ */
 function renderHeatmap() {
   const sel = document.getElementById('drawSelect');
   const v = parseInt(sel.value);
@@ -300,12 +327,19 @@ function renderHeatmap() {
   topHTML += '</div>';
   topInfo.innerHTML = topHTML;
 
-  // 히트맵
-  const ranges = [5,6,7,8,9,10,11,12,13,14,15];
+  // 선택 범위 회차 개수 = 최대 "직전 N회"의 N
+  const startVal = parseInt(document.getElementById('startDraw').value);
+  const endVal = parseInt(document.getElementById('endDraw').value);
+  const rangeCount = Math.max(1, endVal - startVal + 1);
+
+  // 안전: 현재 회차 이전에 최소 rangeCount 개 회차가 있어야 함
+  const maxN = Math.min(rangeCount, idx);
+  const ranges = Array.from({ length: maxN }, (_, i) => i + 1); // 1..maxN
+
   const nums = Array.from({length: 45}, (_, i) => i + 1);
 
   let html = '<table class="heat">';
-  html += '<thead><tr><th class="rowhead">범위</th>';
+  html += '<thead><tr><th class="rowhead">직전</th>';
   nums.forEach(n => html += `<th class="colhead">${n}</th>`);
   html += '</tr></thead><tbody>';
 
@@ -314,11 +348,16 @@ function renderHeatmap() {
     const freq = new Map();
     prev.forEach(p => p.nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1)));
 
-    html += `<tr><th class="rowhead">직전 ${r}회</th>`;
+    html += `<tr><th class="rowhead">${r}회</th>`;
     nums.forEach(n => {
       const c = freq.get(n) || 0;
-      const bg = c > 0 ? (COLOR_MAP[c] || COLOR_MAP[6]) : 'transparent';
-      html += `<td class="cell" style="background:${bg};" title="${n}번 · 직전 ${r}회 · ${c}회 출현"></td>`;
+      if (c === 0) {
+        // 빈칸
+        html += `<td class="cell" style="background:transparent;" title="${n}번 · 직전 ${r}회 · 0회"></td>`;
+      } else {
+        const col = COLOR_MAP[c] || COLOR_MAP[6];
+        html += `<td class="cell" style="background:${col.bg};color:${col.fg};" title="${n}번 · 직전 ${r}회 · ${c}회 출현">${c}</td>`;
+      }
     });
     html += '</tr>';
   });
