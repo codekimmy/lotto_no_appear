@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>로또 출현번호 히트맵 대시보드</title>
+<title>로또 당첨번호 대시보드</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
@@ -17,8 +17,6 @@
   .controls input[type="number"] {
     width: 90px; padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px;
   }
-  .controls select { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px;
-    font-size: 13px; min-width: 110px; }
   .controls button { padding: 9px 16px; background: #3498db; color: #fff; border: none;
     border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 13px; }
   .controls button:hover { background: #2980b9; }
@@ -31,47 +29,33 @@
   .status.ok { background: #eafaf1; color: #1e8449; border-left: 4px solid #27ae60; }
   .status.err { background: #fdedec; color: #a93226; border-left: 4px solid #e74c3c; }
 
-  .legend { max-width: 1400px; margin: 0 auto 15px; background: #fff; padding: 12px 20px;
-    border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13px; }
-  .legend-title { font-weight: bold; color: #2c3e50; }
-  .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-swatch { width: 22px; height: 22px; border-radius: 4px;
-    border: 1px solid rgba(0,0,0,0.15); text-align: center; line-height: 22px;
-    font-size: 11px; font-weight: bold; color: #333; }
-
   .board { max-width: 1400px; margin: 0 auto; background: #fff;
     border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px 20px; }
 
-  .top-info { display: flex; align-items: center; gap: 20px;
-    padding: 10px 4px 14px; border-bottom: 2px solid #eee; margin-bottom: 10px;
-    flex-wrap: wrap; }
-  .draw-no { font-size: 20px; font-weight: bold; color: #2c3e50; }
-  .draw-no small { font-size: 13px; color: #888; font-weight: normal; margin-left: 6px; }
-  .balls { display: flex; gap: 6px; }
-  .ball { display: inline-block; width: 34px; height: 34px; line-height: 34px;
-    border-radius: 50%; color: #fff; font-weight: bold; font-size: 14px; text-align: center; }
-  .b1 { background:#fbc400; color:#333; } .b2 { background:#69c8f2; }
-  .b3 { background:#ff7272; } .b4 { background:#aaa; } .b5 { background:#b0d840; color:#333; }
-
-  .heat-wrap { max-height: 70vh; overflow: auto; border: 1px solid #eee; border-radius: 6px; }
+  .heat-wrap { max-height: 75vh; overflow: auto; border: 1px solid #eee; border-radius: 6px; }
   table.heat { border-collapse: separate; border-spacing: 0; width: 100%;
     min-width: 1000px; table-layout: fixed; }
   table.heat th, table.heat td {
     border-right: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0;
-    text-align: center; padding: 0; height: 30px; font-size: 12px; }
+    text-align: center; padding: 0; height: 32px; font-size: 13px; }
 
+  /* 헤더 고정 */
   table.heat thead th { position: sticky; top: 0; z-index: 3;
     background: #f7f9fc; font-weight: bold;
     border-bottom: 2px solid #e0e0e0; }
   table.heat th.rowhead {
-    width: 90px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
+    width: 100px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
     position: sticky; left: 0; z-index: 2;
     border-right: 2px solid #e0e0e0; }
   table.heat thead th.rowhead { z-index: 4; }
 
+  /* 당첨번호가 들어가는 셀 */
   table.heat td.cell {
-    font-weight: bold; color: #333; font-size: 12px; line-height: 30px; }
+    font-weight: bold; color: #333; font-size: 13px; line-height: 32px; }
+
+  /* 당첨번호 셀 = 빨간 배경 + 흰 글자 */
+  table.heat td.hit {
+    background: #dc2626; color: #fff; font-weight: 900; }
 
   .note { max-width: 1400px; margin: 20px auto; padding: 12px;
     background: #fffbe6; border-left: 4px solid #f1c40f;
@@ -80,8 +64,8 @@
 </head>
 <body>
 
-<h1>🎯 로또 출현번호 히트맵</h1>
-<div class="subtitle">선택 범위만큼 “직전 1회 ~ 직전 N회” × 1~45번 출현 빈도 · 당첨번호 누적 헤더 표시</div>
+<h1>🎯 로또 당첨번호 표</h1>
+<div class="subtitle">범위를 지정하면 회차별 당첨번호를 1~45 위치에 표시 · 범위 내 등장번호는 헤더 빨강</div>
 
 <div class="controls">
   <label>시작 회차:</label>
@@ -89,38 +73,21 @@
   <label>종료 회차:</label>
   <input type="number" id="endDraw" placeholder="예: 1240">
   <button class="gray" onclick="applyRange()">범위 조회</button>
-
-  <label>회차 선택:</label>
-  <select id="drawSelect"><option>-- 먼저 데이터 로드 --</option></select>
-
   <button onclick="runAnalysis()">▶ 분석 실행</button>
   <button class="green" onclick="loadFromSheet(true)">↻ 새로고침</button>
 </div>
 
 <div class="status info" id="status">[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러옵니다.</div>
 
-<div class="legend">
-  <span class="legend-title">출현 횟수:</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#dbeafe">1</span>1회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#93c5fd">2</span>2회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#fbbf24">3</span>3회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#f97316;color:#fff">4</span>4회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#dc2626;color:#fff">5</span>5회</span>
-  <span class="legend-item"><span class="legend-swatch" style="background:#7f1d1d;color:#fff">6+</span>6회+</span>
-  <span style="color:#dc2626;font-weight:900;">●</span>
-  <span style="color:#888;">헤더 빨강 = 그 회차까지 당첨번호로 나온 번호</span>
-</div>
-
 <div class="board" id="board" style="display:none;">
-  <div class="top-info" id="topInfo"></div>
   <div class="heat-wrap" id="heatWrap"></div>
 </div>
 
 <div class="note">
   ※ 페이지는 <b>[▶ 분석 실행] 버튼을 눌러야</b> 시작됩니다 (자동 실행 안 함).<br>
-  ※ <b>시작/종료 회차</b>를 입력하고 [범위 조회] → 그 범위의 회차 개수만큼 “직전 1회 ~ 직전 N회” 행이 생성됩니다.<br>
-  ※ 셀 = 출현 횟수 숫자 + 색상. 0회는 빈칸.<br>
-  ※ 상단 헤더(1~45)에서 <b style="color:#dc2626;">1회차부터 해당 회차까지 당첨번호로 한 번이라도 나온 번호</b>는 빨간색으로 유지됩니다.
+  ※ <b>시작/종료 회차</b>를 입력하고 [범위 조회] → 그 범위의 회차들이 표시됩니다.<br>
+  ※ 각 행 = 한 회차. 당첨번호 6개가 1~45 위치에 표시됩니다.<br>
+  ※ 상단 헤더(1~45)에서 <b style="color:#dc2626;">범위 안에서 한 번이라도 나온 번호</b>는 빨강, 나머지는 검정.
 </div>
 
 <script>
@@ -135,15 +102,6 @@ const PROXIES = [
   url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
   url => "https://thingproxy.freeboard.io/fetch/" + url
 ];
-
-const COLOR_MAP = {
-  1: { bg: '#dbeafe', fg: '#1e3a8a' },
-  2: { bg: '#93c5fd', fg: '#0c2d6b' },
-  3: { bg: '#fbbf24', fg: '#5b3a00' },
-  4: { bg: '#f97316', fg: '#ffffff' },
-  5: { bg: '#dc2626', fg: '#ffffff' },
-  6: { bg: '#7f1d1d', fg: '#ffffff' }
-};
 /* ============================================================ */
 
 let lottoData = [];
@@ -185,9 +143,9 @@ async function loadFromSheet(forceReload) {
 
     const startEl = document.getElementById('startDraw');
     const endEl = document.getElementById('endDraw');
-    if (!startEl.value) startEl.value = Math.max(minD + 15, maxD - 4);
+    if (!startEl.value) startEl.value = Math.max(minD, maxD - 4);
     if (!endEl.value) endEl.value = maxD;
-    startEl.placeholder = `예: ${minD + 15}`;
+    startEl.placeholder = `예: ${minD}`;
     endEl.placeholder = `예: ${maxD}`;
 
     setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${minD} ~ ${maxD}회)`);
@@ -217,11 +175,6 @@ function parseCSV(text) {
   lottoData.sort((a, b) => a.draw - b.draw);
 }
 
-function ballClass(n) {
-  if (n <= 10) return 'b1'; if (n <= 20) return 'b2';
-  if (n <= 30) return 'b3'; if (n <= 40) return 'b4'; return 'b5';
-}
-
 function applyRange() {
   if (lottoData.length === 0) {
     setStatus('err', '먼저 [▶ 분석 실행]으로 데이터를 불러오세요.');
@@ -235,52 +188,18 @@ function applyRange() {
   const minD = Math.min(...draws);
   const maxD = Math.max(...draws);
 
-  let startDraw = isNaN(startVal) ? minD + 15 : startVal;
+  let startDraw = isNaN(startVal) ? minD : startVal;
   let endDraw = isNaN(endVal) ? maxD : endVal;
 
-  const minAllowed = minD + 15;
-  if (startDraw < minAllowed) startDraw = minAllowed;
+  if (startDraw < minD) startDraw = minD;
   if (endDraw > maxD) endDraw = maxD;
   if (startDraw > endDraw) [startDraw, endDraw] = [endDraw, startDraw];
 
   document.getElementById('startDraw').value = startDraw;
   document.getElementById('endDraw').value = endDraw;
 
-  const sel = document.getElementById('drawSelect');
-  const prevValue = sel.value;
-  sel.innerHTML = '';
-
-  const sorted = [...lottoData].sort((a, b) => b.draw - a.draw);
-  let count = 0;
-  sorted.forEach(d => {
-    if (d.draw < startDraw || d.draw > endDraw) return;
-    const idx = lottoData.findIndex(x => x.draw === d.draw);
-    if (idx < 15) return;
-    const opt = document.createElement('option');
-    opt.value = d.draw;
-    opt.textContent = d.draw + '회';
-    sel.appendChild(opt);
-    count++;
-  });
-
-  if (count === 0) {
-    sel.innerHTML = '<option>-- 해당 범위 없음 --</option>';
-    document.getElementById('board').style.display = 'none';
-    setStatus('err', `범위(${startDraw}~${endDraw})에 분석 가능한 회차가 없습니다. (최소 ${minAllowed}회 이상 필요)`);
-    return;
-  }
-
-  if (prevValue && [...sel.options].some(o => o.value === prevValue)) {
-    sel.value = prevValue;
-  }
-
-  if (!sel.dataset.bound) {
-    sel.addEventListener('change', renderHeatmap);
-    sel.dataset.bound = '1';
-  }
-
-  setStatus('ok', `범위 적용: ${startDraw} ~ ${endDraw}회 (${count}개 회차)`);
-  renderHeatmap();
+  setStatus('ok', `범위: ${startDraw} ~ ${endDraw}회 (${endDraw - startDraw + 1}개 회차)`);
+  renderTable(startDraw, endDraw);
 }
 
 async function runAnalysis() {
@@ -292,64 +211,42 @@ async function runAnalysis() {
   }
 }
 
-function renderHeatmap() {
-  const sel = document.getElementById('drawSelect');
-  const v = parseInt(sel.value);
-  if (isNaN(v)) return;
-  const idx = lottoData.findIndex(d => d.draw === v);
-  if (idx < 15) return;
+function renderTable(startDraw, endDraw) {
+  // 범위 안 회차들 (최신 → 과거)
+  const items = [...lottoData]
+    .filter(d => d.draw >= startDraw && d.draw <= endDraw)
+    .sort((a, b) => b.draw - a.draw);
 
-  const item = lottoData[idx];
-
-  // ★ 선택 회차까지 누적된 당첨번호 집합 (1회차 ~ 현재)
-  const winSet = new Set();
-  for (let i = 0; i <= idx; i++) {
-    lottoData[i].nums.forEach(n => winSet.add(n));
+  if (items.length === 0) {
+    setStatus('err', `범위(${startDraw}~${endDraw})에 데이터가 없습니다.`);
+    document.getElementById('board').style.display = 'none';
+    return;
   }
 
-  // 상단 회차 + 당첨번호
-  const topInfo = document.getElementById('topInfo');
-  let topHTML = `<div class="draw-no">${item.draw}회<small>${item.date}</small></div>`;
-  topHTML += '<div class="balls">';
-  item.nums.forEach(n => topHTML += `<span class="ball ${ballClass(n)}">${n}</span>`);
-  topHTML += '</div>';
-  topInfo.innerHTML = topHTML;
-
-  const startVal = parseInt(document.getElementById('startDraw').value);
-  const endVal = parseInt(document.getElementById('endDraw').value);
-  const rangeCount = Math.max(1, endVal - startVal + 1);
-
-  const maxN = Math.min(rangeCount, idx);
-  const ranges = Array.from({ length: maxN }, (_, i) => i + 1);
+  // 범위 안에서 나온 번호 집합
+  const appearedSet = new Set();
+  items.forEach(d => d.nums.forEach(n => appearedSet.add(n)));
 
   const nums = Array.from({length: 45}, (_, i) => i + 1);
 
   let html = '<table class="heat">';
-  html += '<thead><tr><th class="rowhead">직전</th>';
-
-  // ★ 헤더: 누적 당첨번호면 빨강 유지, 아니면 검정
+  html += '<thead><tr><th class="rowhead">회차</th>';
   nums.forEach(n => {
-    const style = winSet.has(n)
+    const style = appearedSet.has(n)
       ? 'color:#dc2626;font-weight:900;'
       : 'color:#2c3e50;';
     html += `<th class="colhead" style="${style}">${n}</th>`;
   });
   html += '</tr></thead><tbody>';
 
-  ranges.forEach(r => {
-    const prev = lottoData.slice(idx - r, idx);
-    const freq = new Map();
-    prev.forEach(p => p.nums.forEach(n => freq.set(n, (freq.get(n) || 0) + 1)));
-
-    html += `<tr><th class="rowhead">${r}회</th>`;
+  items.forEach(item => {
+    const winSet = new Set(item.nums);
+    html += `<tr><th class="rowhead">${item.draw}회</th>`;
     nums.forEach(n => {
-      const c = freq.get(n) || 0;
-      const title = `${n}번 · 직전 ${r}회 · ${c}회 출현`;
-      if (c === 0) {
-        html += `<td class="cell" style="background:transparent;" title="${title}"></td>`;
+      if (winSet.has(n)) {
+        html += `<td class="cell hit">${n}</td>`;
       } else {
-        const col = COLOR_MAP[c] || COLOR_MAP[6];
-        html += `<td class="cell" style="background:${col.bg};color:${col.fg};" title="${title}">${c}</td>`;
+        html += `<td class="cell"></td>`;
       }
     });
     html += '</tr>';
