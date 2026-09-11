@@ -40,14 +40,28 @@
     border-radius: 50%; color: #fff; font-weight: bold; margin: 1px; font-size: 12px; text-align: center; }
   .b1 { background:#fbc400; color:#333; } .b2 { background:#69c8f2; }
   .b3 { background:#ff7272; } .b4 { background:#aaa; } .b5 { background:#b0d840; color:#333; }
-  .freq-cell { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
-  .freq-ball { position: relative; width: 30px; height: 30px; line-height: 30px; border-radius: 50%;
-    font-weight: bold; font-size: 13px; text-align: center; color: #fff; border: 2px solid rgba(0,0,0,0.1); }
-  .freq-ball .cnt { position: absolute; top: -6px; right: -6px; background: #2c3e50; color: #fff;
-    border-radius: 10px; font-size: 10px; line-height: 1; padding: 2px 4px; font-weight: bold; border: 1px solid #fff; }
-  .f1 { background:#dbeafe; color:#1e3a8a; } .f2 { background:#93c5fd; color:#0c2d6b; }
-  .f3 { background:#fbbf24; color:#5b3a00; } .f4 { background:#f97316; color:#fff; }
-  .f5 { background:#dc2626; color:#fff; } .f6 { background:#7f1d1d; color:#fff; }
+
+  /* 숫자만 나열, 색상으로만 빈도 구분 */
+  .freq-cell {
+    display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center;
+    line-height: 1.2;
+  }
+  .freq-num {
+    display: inline-block;
+    min-width: 22px;
+    padding: 2px 4px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .f1 { background:#eaf2ff; color:#1e3a8a; }
+  .f2 { background:#c7ddff; color:#0c2d6b; }
+  .f3 { background:#fde68a; color:#5b3a00; }
+  .f4 { background:#fdba74; color:#7c2d12; }
+  .f5 { background:#f87171; color:#fff; }
+  .f6 { background:#b91c1c; color:#fff; }
+
   .note { max-width: 1500px; margin: 20px auto; padding: 12px; background: #fffbe6;
     border-left: 4px solid #f1c40f; font-size: 13px; color: #555; border-radius: 5px; }
   .draw-nums { white-space: nowrap; }
@@ -57,7 +71,7 @@
 <body>
 
 <h1>🎯 로또 출현번호 빈도 대시보드</h1>
-<div class="subtitle">직전 5~15회 실제 출현번호를 색상과 횟수로 표시 · Google Sheets 연동</div>
+<div class="subtitle">직전 5~15회 실제 출현번호를 숫자와 색상으로 표시 · Google Sheets 연동</div>
 
 <div class="controls">
   <label>시작 회차:</label>
@@ -82,7 +96,7 @@
   <span class="legend-item"><span class="legend-swatch f4"></span>4회</span>
   <span class="legend-item"><span class="legend-swatch f5"></span>5회</span>
   <span class="legend-item"><span class="legend-swatch f6"></span>6회+</span>
-  <span style="color:#888;">(배지 숫자 = 실제 출현 횟수)</span>
+  <span style="color:#888;">(숫자 배경색 = 출현 횟수)</span>
 </div>
 
 <div class="scroll-wrap">
@@ -95,8 +109,8 @@
 <div class="note">
   ※ 페이지는 <b>[▶ 분석 실행] 버튼을 눌러야</b> 시작됩니다 (자동 실행 안 함).<br>
   ※ 기본값은 <b>최근 100회차만</b> 표시 → 빠릅니다. “표시 개수”를 늘리면 더 많이 보입니다.<br>
-  ※ 렌더링은 <b>배치(20개씩)</b>로 처리되어 페이지가 멈추지 않습니다.<br>
-  ※ 각 셀 = 해당 회차의 직전 N회차 동안 실제로 출현한 모든 번호 (중복 제거, 오름차순).
+  ※ 각 셀 = 해당 회차의 직전 N회차 동안 실제로 출현한 모든 번호 (중복 제거, 오름차순).<br>
+  ※ 숫자 배경색이 진할수록 많이 출현한 번호입니다.
 </div>
 
 <script>
@@ -105,7 +119,7 @@
    ============================================================ */
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQtTpRkYQkAJVRPyEW0spfs4bJzQEAUbNjw4TFfb7kxWH8Ks2F7ctBnYC-1YeJf_uOnnmsFaxsaRifA/pub?output=csv";
 
-/* CORS 우회 프록시 (file:// 등 환경 대비) */
+/* CORS 우회 프록시 (환경 대비) */
 const PROXIES = [
   url => url,
   url => "https://corsproxy.io/?" + encodeURIComponent(url),
@@ -225,7 +239,7 @@ async function runAnalysis() {
 
   const thead = document.getElementById('tableHead');
   let headHTML = '<tr><th>회차</th><th>당첨번호</th>';
-  ranges.forEach(r => headHTML += `<th>직전 ${r}회 출현번호</th>`);
+  ranges.forEach(r => headHTML += `<th>직전 ${r}회</th>`);
   headHTML += '</tr>';
   thead.innerHTML = headHTML;
 
@@ -264,7 +278,7 @@ async function runAnalysis() {
         let cellHTML = '<div class="freq-cell">';
         nums.forEach(n => {
           const c = freq.get(n);
-          cellHTML += `<div class="freq-ball ${freqClass(c)}" title="${n}번: ${c}회">${n}<span class="cnt">${c}</span></div>`;
+          cellHTML += `<span class="freq-num ${freqClass(c)}" title="${n}번: ${c}회">${n}</span>`;
         });
         cellHTML += '</div>';
         rowHTML += `<td>${cellHTML}</td>`;
@@ -284,11 +298,7 @@ async function runAnalysis() {
   isRendering = false;
 }
 
-/* ============================================================
-   페이지 열 때: UI만 표시, 아무 동작 안 함
-   ============================================================ */
 window.addEventListener('DOMContentLoaded', () => {
-  // 아무것도 실행하지 않음
   setStatus('info', '[▶ 분석 실행] 버튼을 누르면 시트에서 데이터를 불러와 분석합니다.');
 });
 </script>
