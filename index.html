@@ -56,17 +56,12 @@
   table.heat { border-collapse: collapse; width: 100%; min-width: 900px; table-layout: fixed; }
   table.heat th, table.heat td {
     border: 1px solid #f0f0f0; text-align: center; padding: 0;
-    height: 28px; font-size: 12px; }
+    height: 28px; font-size: 12px; background-clip: padding-box; }
   table.heat th.rowhead {
     width: 80px; background: #f7f9fc; font-weight: bold; color: #2c3e50;
     border-right: 2px solid #e0e0e0; font-size: 12px; }
   table.heat th.colhead {
     background: #f7f9fc; font-weight: bold; color: #2c3e50; height: 30px; font-size: 12px; }
-  table.heat td.cell { background: transparent; }
-
-  .c1 { background:#dbeafe; } .c2 { background:#93c5fd; }
-  .c3 { background:#fbbf24; } .c4 { background:#f97316; }
-  .c5 { background:#dc2626; } .c6 { background:#7f1d1d; }
 
   .note { max-width: 1400px; margin: 20px auto; padding: 12px;
     background: #fffbe6; border-left: 4px solid #f1c40f;
@@ -96,12 +91,12 @@
 
 <div class="legend">
   <span class="legend-title">출현 횟수:</span>
-  <span class="legend-item"><span class="legend-swatch c1"></span>1회</span>
-  <span class="legend-item"><span class="legend-swatch c2"></span>2회</span>
-  <span class="legend-item"><span class="legend-swatch c3"></span>3회</span>
-  <span class="legend-item"><span class="legend-swatch c4"></span>4회</span>
-  <span class="legend-item"><span class="legend-swatch c5"></span>5회</span>
-  <span class="legend-item"><span class="legend-swatch c6"></span>6회+</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#dbeafe"></span>1회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#93c5fd"></span>2회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#fbbf24"></span>3회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#f97316"></span>4회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#dc2626"></span>5회</span>
+  <span class="legend-item"><span class="legend-swatch" style="background:#7f1d1d"></span>6회+</span>
   <span style="color:#888;">· 출현 없음 = 빈칸</span>
 </div>
 
@@ -129,6 +124,16 @@ const PROXIES = [
   url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
   url => "https://thingproxy.freeboard.io/fetch/" + url
 ];
+
+/* 출현 횟수 → 배경색 매핑 (인라인 스타일용) */
+const COLOR_MAP = {
+  1: '#dbeafe',
+  2: '#93c5fd',
+  3: '#fbbf24',
+  4: '#f97316',
+  5: '#dc2626',
+  6: '#7f1d1d'
+};
 /* ============================================================ */
 
 let lottoData = [];
@@ -178,7 +183,6 @@ async function loadFromSheet(forceReload) {
 
     setStatus('ok', `✅ ${lottoData.length}개 회차 로드 완료 (${minD} ~ ${maxD}회)`);
 
-    // 범위 적용 (드롭다운 채우기 + 첫 회차 렌더)
     applyRange();
     return true;
   } catch (e) {
@@ -191,14 +195,15 @@ function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   lottoData = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',');
+    const cols = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
     if (cols.length < 8) continue;
-    const draw = parseInt(cols[0]);
+    const draw = parseInt(cols[0], 10);
     if (isNaN(draw)) continue;
-    lottoData.push({
-      draw: draw, date: cols[1],
-      nums: [cols[2],cols[3],cols[4],cols[5],cols[6],cols[7]].map(Number)
-    });
+    const nums = [cols[2],cols[3],cols[4],cols[5],cols[6],cols[7]]
+      .map(s => parseInt(s, 10))
+      .filter(n => !isNaN(n) && n >= 1 && n <= 45);
+    if (nums.length !== 6) continue;
+    lottoData.push({ draw: draw, date: cols[1], nums: nums });
   }
   lottoData.sort((a, b) => a.draw - b.draw);
 }
@@ -207,21 +212,12 @@ function ballClass(n) {
   if (n <= 10) return 'b1'; if (n <= 20) return 'b2';
   if (n <= 30) return 'b3'; if (n <= 40) return 'b4'; return 'b5';
 }
-function freqClass(c) {
-  if (c <= 0) return '';
-  if (c === 1) return 'c1';
-  if (c === 2) return 'c2';
-  if (c === 3) return 'c3';
-  if (c === 4) return 'c4';
-  if (c === 5) return 'c5';
-  return 'c6';
-}
 
-/* ============================================================
-   범위 조회: 시작/종료 회차 안의 회차들만 드롭다운에 채움
-   ============================================================ */
 function applyRange() {
-  if (lottoData.length === 0) { setStatus('err', '먼저 [▶ 분석 실행]으로 데이터를 불러오세요.'); return; }
+  if (lottoData.length === 0) {
+    setStatus('err', '먼저 [▶ 분석 실행]으로 데이터를 불러오세요.');
+    return;
+  }
 
   const startVal = parseInt(document.getElementById('startDraw').value);
   const endVal = parseInt(document.getElementById('endDraw').value);
@@ -233,7 +229,6 @@ function applyRange() {
   let startDraw = isNaN(startVal) ? minD + 15 : startVal;
   let endDraw = isNaN(endVal) ? maxD : endVal;
 
-  // 범위 보정
   const minAllowed = minD + 15;
   if (startDraw < minAllowed) startDraw = minAllowed;
   if (endDraw > maxD) endDraw = maxD;
@@ -242,7 +237,6 @@ function applyRange() {
   document.getElementById('startDraw').value = startDraw;
   document.getElementById('endDraw').value = endDraw;
 
-  // 드롭다운 채우기 (범위 안 회차, 최신 → 과거)
   const sel = document.getElementById('drawSelect');
   const prevValue = sel.value;
   sel.innerHTML = '';
@@ -267,20 +261,16 @@ function applyRange() {
     return;
   }
 
-  // 이전 선택값이 범위 안에 있으면 유지, 아니면 첫 항목
   if (prevValue && [...sel.options].some(o => o.value === prevValue)) {
     sel.value = prevValue;
   }
 
-  // change 이벤트 한 번만 바인딩
   if (!sel.dataset.bound) {
     sel.addEventListener('change', renderHeatmap);
     sel.dataset.bound = '1';
   }
 
   setStatus('ok', `범위 적용: ${startDraw} ~ ${endDraw}회 (${count}개 회차)`);
-
-  // 첫 회차 렌더
   renderHeatmap();
 }
 
@@ -327,8 +317,8 @@ function renderHeatmap() {
     html += `<tr><th class="rowhead">직전 ${r}회</th>`;
     nums.forEach(n => {
       const c = freq.get(n) || 0;
-      const cls = freqClass(c);
-      html += `<td class="cell ${cls}" title="${n}번 · 직전 ${r}회 · ${c}회 출현"></td>`;
+      const bg = c > 0 ? (COLOR_MAP[c] || COLOR_MAP[6]) : 'transparent';
+      html += `<td class="cell" style="background:${bg};" title="${n}번 · 직전 ${r}회 · ${c}회 출현"></td>`;
     });
     html += '</tr>';
   });
